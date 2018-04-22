@@ -1,0 +1,8 @@
+[package]
+name = "ik_solver"
+version = "0.1.0"
+authors = ["Ethan Lam <elmemphis2000@gmail.com>"]
+
+[dependencies]
+rulinalg="0.4.2"
+piston_window = "0.70.0"
