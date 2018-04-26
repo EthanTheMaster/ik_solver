@@ -94,7 +94,7 @@ impl Assembly {
         }
     }
 
-    pub fn solve(&mut self, goal: Matrix<f64>, window: &mut PistonWindow, window_settings: &RenderWindow) {
+    pub fn solve(&mut self, goal: &Matrix<f64>, window: &mut PistonWindow, window_settings: &RenderWindow) {
         assert!(self.rotators.len() >= 1);
 
         let step_size = 0.01;
@@ -117,7 +117,7 @@ impl Assembly {
                 }
 
                 //Use Jacobian Transpose method to find the delta angles
-                delta_angles = &jacobian_matrix.transpose() * (&goal - &end_effector.position);
+                delta_angles = &jacobian_matrix.transpose() * (goal - &end_effector.position);
 
                 last_position = end_effector.position.clone();
             }
@@ -147,15 +147,37 @@ impl Assembly {
 
     //Some goals cannot be obtained with Jacobian Transpose IK on first pass ... an intermediate point needs to be met
     //so that the solver can reach the goal
-    pub fn create_path(&mut self, goal: Matrix<f64>, window: &mut PistonWindow, windows_settings: &RenderWindow) {
+    pub fn create_path(&mut self, goal: &Matrix<f64>, window: &mut PistonWindow, windows_settings: &RenderWindow) {
         assert!(self.rotators.len() >= 1);
 
         let current_position: Matrix<f64> = self.rotators.last().unwrap().borrow().position.clone();
         let max_y = current_position.data()[1].max(goal.data()[1]);
         let mid_x = (current_position.data()[0] + goal.data()[0]) / 2.0;
 
-        self.solve(Matrix::new(2, 1, vec![mid_x, max_y + 2.0]), window, &windows_settings);
+        self.solve(&Matrix::new(2, 1, vec![mid_x, max_y + 2.0]), window, &windows_settings);
         self.solve(goal, window, &windows_settings);
+    }
+
+    //Assembly will go to each waypoint
+    pub fn follow_path(&mut self, goals: &Vec<Matrix<f64>>, window: &mut PistonWindow, windows_settings: &RenderWindow) {
+        for point in goals {
+            self.solve(point, window, windows_settings);
+        }
+    }
+
+    //Path can be generated from parametric equation
+    pub fn generate_path(parametric: &Fn(f64) -> Matrix<f64>, start_time: f64, end_time: f64, step_size: f64) -> Vec<Matrix<f64>> {
+        assert!(start_time < end_time);
+        assert!(step_size > 0.0);
+
+        let mut t = start_time;
+        let mut points: Vec<Matrix<f64>> = Vec::with_capacity(((end_time - start_time) / step_size).ceil() as usize);
+        while t <= end_time {
+            points.push(parametric(t));
+            t += step_size;
+        }
+
+        return points;
     }
 
     //Function to render the assembly

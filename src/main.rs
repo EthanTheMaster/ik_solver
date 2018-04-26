@@ -9,6 +9,8 @@ use ik::RenderWindow;
 use self::rulinalg::matrix::Matrix;
 
 fn main() {
+    /***Demonstration of rotation calculation for Rotator***/
+
     //    let a = Rotator::new(Matrix::new(2, 1, vec![0.0, 0.0]));
     //    let b = Rotator::new(Matrix::new(2, 1, vec![1.0, 0.0]));
     //    let c = Rotator::new(Matrix::new(2, 1, vec![2.0, 0.0]));
@@ -36,18 +38,49 @@ fn main() {
 
     let mut assembly = Assembly::new();
     assembly.add_rotator(Matrix::new(2, 1, vec![0.0, 0.0]));
-    assembly.add_rotator(Matrix::new(2, 1, vec![1.0, 0.0]));
-    assembly.add_rotator(Matrix::new(2, 1, vec![2.0, 0.0]));
-    assembly.add_rotator(Matrix::new(2, 1, vec![3.0, 0.0]));
-    assembly.add_rotator(Matrix::new(2, 1, vec![4.0, 0.0]));
-    assembly.add_rotator(Matrix::new(2, 1, vec![5.0, 0.0]));
-    assembly.add_rotator(Matrix::new(2, 1, vec![6.0, 0.0]));
-    assembly.add_rotator(Matrix::new(2, 1, vec![7.0, 0.0]));
-    assembly.add_rotator(Matrix::new(2, 1, vec![8.0, 0.0]));
-    assembly.add_rotator(Matrix::new(2, 1, vec![9.0, 0.0]));
+//    assembly.add_rotator(Matrix::new(2, 1, vec![1.0, 0.0]));
+//    assembly.add_rotator(Matrix::new(2, 1, vec![2.0, 0.0]));
+    assembly.add_rotator(Matrix::new(2, 1, vec![3.333, 0.0]));
+//    assembly.add_rotator(Matrix::new(2, 1, vec![4.0, 0.0]));
+//    assembly.add_rotator(Matrix::new(2, 1, vec![5.0, 0.0]));
+    assembly.add_rotator(Matrix::new(2, 1, vec![6.666, 0.0]));
+//    assembly.add_rotator(Matrix::new(2, 1, vec![7.0, 0.0]));
+//    assembly.add_rotator(Matrix::new(2, 1, vec![8.0, 0.0]));
+//    assembly.add_rotator(Matrix::new(2, 1, vec![9.0, 0.0]));
     assembly.add_rotator(Matrix::new(2, 1, vec![10.0, 0.0]));
 
     let mut target: Matrix<f64> = Matrix::new(2, 1, vec![10.0, 0.0]);
+
+    //Sequence of paths that form a square
+    let parametric_path1 = |t: f64| -> Matrix<f64> {
+        let x = -1.0*t + 5.0;
+        let y = 5.0;
+
+        return Matrix::new(2, 1, vec![x, y]);
+    };
+    let parametric_path2 = |t: f64| -> Matrix<f64> {
+        let x = -5.0;
+        let y = -1.0*t + 5.0;
+
+        return Matrix::new(2, 1, vec![x, y]);
+    };
+    let parametric_path3 = |t: f64| -> Matrix<f64> {
+        let x = t - 5.0;
+        let y = -5.0;
+
+        return Matrix::new(2, 1, vec![x, y]);
+    };
+    let parametric_path4 = |t: f64| -> Matrix<f64> {
+        let x = 5.0;
+        let y = t - 5.0;
+
+        return Matrix::new(2, 1, vec![x, y]);
+    };
+
+    let path1 = Assembly::generate_path(&parametric_path1, 0.0, 10.0, 0.1);
+    let path2 = Assembly::generate_path(&parametric_path2, 0.0, 10.0, 0.1);
+    let path3 = Assembly::generate_path(&parametric_path3, 0.0, 10.0, 0.1);
+    let path4 = Assembly::generate_path(&parametric_path4, 0.0, 10.0, 0.1);
 
     let mut events = Events::new(EventSettings::new().lazy(true));
     while let Some(e) = events.next(&mut window) {
@@ -56,7 +89,7 @@ fn main() {
 
         //Create a target for rig
         if let Some(Button::Mouse(MouseButton::Left)) = e.press_args() {
-            assembly.solve(target.clone(), &mut window, &camera);
+            assembly.solve(&target, &mut window, &camera);
         }
         //Track Mouse Position
         e.mouse_cursor(|x, y| {
@@ -69,6 +102,13 @@ fn main() {
                 rotator.borrow_mut().reset();
             }
         }
+
+        //Follow Path ... comment out if you want an ik playground
+        assembly.follow_path(&path1, &mut window, &camera);
+        assembly.follow_path(&path2, &mut window, &camera);
+        assembly.follow_path(&path3, &mut window, &camera);
+        assembly.follow_path(&path4, &mut window, &camera);
+
         //Render Assembly
         if let Some(e_w) = window.next() {
             window.draw_2d(&e_w, |c, g| {
